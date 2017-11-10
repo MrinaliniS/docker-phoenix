@@ -1,5 +1,5 @@
-FROM sequenceiq/hadoop-docker:2.7.0
-MAINTAINER SequenceIQ
+FROM gettyimages/spark
+MAINTAINER Shruthi Shiri <shirimrinalini@gmail.com>
 
 # zookeeper
 ENV ZOOKEEPER_VERSION 3.4.6
