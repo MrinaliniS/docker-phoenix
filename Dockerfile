@@ -1,25 +1,38 @@
 FROM gettyimages/spark
 MAINTAINER Shruthi Shiri <shirimrinalini@gmail.com>
 
-# zookeeper
-ENV ZOOKEEPER_VERSION 3.4.6
-RUN curl -s http://mirror.csclub.uwaterloo.ca/apache/zookeeper/zookeeper-$ZOOKEEPER_VERSION/zookeeper-$ZOOKEEPER_VERSION.tar.gz | tar -xz -C /usr/local/
-RUN cd /usr/local && ln -s ./zookeeper-$ZOOKEEPER_VERSION zookeeper
-ENV ZOO_HOME /usr/local/zookeeper
-ENV PATH $PATH:$ZOO_HOME/bin
-RUN mv $ZOO_HOME/conf/zoo_sample.cfg $ZOO_HOME/conf/zoo.cfg
-RUN mkdir /tmp/zookeeper
+COPY *.sh /build/
 
-# hbase
-ENV HBASE_MAJOR 1.1
-ENV HBASE_MINOR 2
-ENV HBASE_VERSION "${HBASE_MAJOR}.${HBASE_MINOR}"
-RUN curl -s http://apache.mirror.gtcomm.net/hbase/$HBASE_VERSION/hbase-$HBASE_VERSION-bin.tar.gz | tar -xz -C /usr/local/
-RUN cd /usr/local && ln -s ./hbase-$HBASE_VERSION hbase
-ENV HBASE_HOME /usr/local/hbase
-ENV PATH $PATH:$HBASE_HOME/bin
-RUN rm $HBASE_HOME/conf/hbase-site.xml
-ADD hbase-site.xml $HBASE_HOME/conf/hbase-site.xml
+ENV HBASE_VERSION 1.2.4
+
+RUN /build/prepare-hbase.sh && \
+    cd /opt/hbase && /build/build-hbase.sh \
+    cd / && /build/cleanup-hbase.sh && rm -rf /build
+
+VOLUME /data
+
+ADD ./hbase-site.xml /opt/hbase/conf/hbase-site.xml
+
+ADD ./zoo.cfg /opt/hbase/conf/zoo.cfg
+
+ADD ./replace-hostname /opt/replace-hostname
+
+ADD ./hbase-server /opt/hbase-server
+
+# REST API
+EXPOSE 8080
+# REST Web UI at :8085/rest.jsp
+EXPOSE 8085
+# Thrift API
+EXPOSE 9090
+# Thrift Web UI at :9095/thrift.jsp
+EXPOSE 9095
+# HBase's Embedded zookeeper cluster
+EXPOSE 2181
+# HBase Master web UI at :16010/master-status;  ZK at :16010/zk.jsp
+EXPOSE 16010
+
+CMD ["/opt/hbase-server"]
 
 # phoenix
 ENV PHOENIX_VERSION 4.6.0
